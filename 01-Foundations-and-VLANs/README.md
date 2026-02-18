@@ -12,4 +12,4 @@
 **Resolution:** Re-addressed to `192.168.10.1`. Connectivity restored.
 
 ### 📁 Lab Files
-* [Download .pkt File](./Citadel_Foundation.pkt) (Upload your Packet Tracer file to this folder later!)
+* [Download .pkt File](../Citadel_Full_Build.pkt) 
