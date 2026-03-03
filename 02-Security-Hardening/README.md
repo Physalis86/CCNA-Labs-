@@ -45,3 +45,6 @@ ip access-list extended ACL-GUEST-INBOUND
 interface GigabitEthernet0/0/0.20
  description *** GUEST_VLAN_GATEWAY ***
  ip access-group ACL-GUEST-INBOUND in
+
+### 📁 Lab Files
+* [Download Master Project File](../Citadel_Full_Build.pkt)
