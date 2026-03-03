@@ -8,7 +8,7 @@ Welcome to my living technical library. This repository documents my hands-on jo
   * *Focus:* SSH v2 implementation, RSA Key Generation, and Layer 2 Port Security.
 
 ## 🛠️ Master Lab Files
-* **[Full Citadel Build (v1.2.0)](./Citadel_Full_Build.pkt)** - The complete, integrated network lab file.
+* **[Full Citadel Build (v1.3.0)](./Citadel_Full_Build.pkt)** - The complete, integrated network lab file.
 
 ---
 "If it's not documented, it didn't happen."
