@@ -18,54 +18,30 @@ Implemented hardware-level lockdown on all access ports:
 * **Resolution:** Corrected command to `ssh -l architect [IP]`.
 
 
-## 🛡️ Phase 4: Perimeter Security (The Bouncer)
-**Objective:** Enforce departmental isolation by preventing the Guest Network (VLAN 20) from accessing the Architect Network (VLAN 10).
-
-### 📋 The Technical Blueprint
-* **Technology:** Standard IPv4 ACLs (Numbered).
-* **Logic:** Applied an "Implicit Deny" mitigation strategy with a `permit any` catch-all.
-* **Placement:** Applied **Outbound** on the Architect Sub-interface (Gi0/0.10) to ensure traffic is only filtered at the final destination.
-
-### 🔍 Incident Report: #004 (The Local Interface Loophole)
-* **Symptom:** Guest PC was still able to ping the Architect Gateway (192.168.10.1) despite the ACL being active.
-* **Discovery:** Standard ACLs applied outbound filter traffic *leaving* the interface toward the network, but do not stop traffic destined for the router's own virtual IP (the sub-interface).
-* **Resolution:** Verified the ACL by pinging an actual end-host (192.168.10.2). The router successfully dropped the packet and returned "Destination host unreachable," confirming the perimeter was secure.
-
-### 📜 Golden Config: Standard ACL
-```bash
-! Define the Bouncer: Block Guest Subnet, Allow Everything Else
-access-list 1 deny 192.168.20.0 0.0.0.255
-access-list 1 permit any
-
-! Apply to the Architect Gateway
-interface GigabitEthernet0/0.10
- ip access-group 1 out
 ---
-## 🛡️ Phase 4.2: Extended Perimeter Control (Granular Filtering)
-**Objective:** Transition from "All-or-Nothing" filtering to Protocol-Specific isolation. 
+## 🛡️ Phase 4.3: Enterprise Perimeter Refactor (Named ACLs)
+**Status:** Production-Ready | **Standard:** Least Privilege Access
 
-### 📋 The Technical Evolution
-The "Citadel" security policy was upgraded from a Standard ACL to an **Extended ACL (101)**. This allows the network to distinguish between different types of traffic (ICMP vs. TCP), ensuring that Guests can test connectivity without accessing sensitive internal web services.
+In this phase, the **Citadel** security posture was audited and refactored from a "Student-Level" standard to an **Enterprise Production** standard. 
 
-### 🔍 Incident Report: #005 (The 'WWW' Alias)
-* **Symptom:** After configuring the ACL for port 80, the running configuration displayed `permit tcp any any eq www`.
-* **Discovery:** Cisco IOS uses "Port Aliases." It automatically translates common port numbers (80, 443, 22) into human-readable text (www, https, ssh). 
-* **Resolution:** Verified that the underlying logic remains the same; the router is simply providing a display alias for the engineer.
+### 📋 Architectural Improvements
+* **Self-Documenting Logic:** Transitioned to **Named Extended ACLs** (`ACL-GUEST-INBOUND`). This allows for easier auditing and modification by multiple engineers.
+* **Granular Protocol Control:** Configured specific filtering to block **TCP/80 (HTTP)** and **TCP/443 (HTTPS)** while maintaining **ICMP (Ping)** for network diagnostics.
+* **Edge Placement Strategy:** ACL is applied **Inbound** on the Guest Gateway sub-interface. This adheres to the best practice of dropping unauthorized traffic at the source, preserving Router CPU cycles.
 
-### 📜 Golden Config: Extended ACL
+### 📜 The "Golden Config" (HQ-CORE-RTR-01)
 ```bash
-! Allow ICMP (Ping) for connectivity testing
-access-list 101 permit icmp 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255
-
-! Block HTTP (Web) traffic from Guest to Architect
-access-list 101 deny tcp 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255 eq 80
-
-! Allow all other traffic (Internet Access)
-access-list 101 permit ip any any
-
-! Apply Inbound on the Guest Interface (Efficiency: Drop bad traffic early)
-interface GigabitEthernet0/0.20
- ip access-group 101 in
-
-### 📁 Lab Files
-* [Download Master Project File](../Citadel_Full_Build.pkt)
+! Define the Professional Security Policy
+ip access-list extended ACL-GUEST-INBOUND
+ remark -- [SEC-01] Permit ICMP for Internal Diagnostics --
+ permit icmp 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255
+ remark -- [SEC-02] Deny Web Access (HTTP/HTTPS) to Architect VLAN --
+ deny tcp 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255 eq 80
+ deny tcp 192.168.20.0 0.0.0.255 192.168.10.0 0.0.0.255 eq 443
+ remark -- [SEC-03] Permit Outbound Internet Traffic --
+ permit ip 192.168.20.0 0.0.0.255 any
+!
+! Interface Application (Edge Placement)
+interface GigabitEthernet0/0/0.20
+ description *** GUEST_VLAN_GATEWAY ***
+ ip access-group ACL-GUEST-INBOUND in
